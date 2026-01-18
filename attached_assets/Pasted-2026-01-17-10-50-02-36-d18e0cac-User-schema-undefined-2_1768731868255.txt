@@ -1,0 +1,164 @@
+2026-01-17 10:50:02.36
+d18e0cac
+User
+schema: undefined,
+2026-01-17 10:50:02.36
+d18e0cac
+User
+_maxListeners: undefined,
+2026-01-17 10:50:02.36
+d18e0cac
+User
+column: undefined,
+2026-01-17 10:50:02.36
+d18e0cac
+User
+emptyQuery: [Function: bound _handleEmptyQuery],
+2026-01-17 10:50:02.36
+d18e0cac
+User
+at qo.emit (node:events:524:28)
+2026-01-17 10:50:02.36
+d18e0cac
+User
+at TLSSocket. (/home/runner/workspace/dist/index.cjs:63:47921)
+2026-01-17 10:50:02.36
+d18e0cac
+User
+at addChunk (node:internal/streams/readable:561:12)
+2026-01-17 10:50:02.36
+d18e0cac
+User
+constraint: undefined,
+2026-01-17 10:50:02.36
+d18e0cac
+User
+internalQuery: undefined,
+2026-01-17 10:50:02.36
+d18e0cac
+User
+at TLSSocket. (/home/runner/workspace/dist/index.cjs:63:47921)
+2026-01-17 10:50:02.36
+d18e0cac
+User
+dataType: undefined,
+2026-01-17 10:50:02.36
+d18e0cac
+User
+database: 'neondb',
+2026-01-17 10:50:02.36
+d18e0cac
+User
+at /home/runner/workspace/dist/index.cjs:63:50560
+2026-01-17 10:50:02.36
+d18e0cac
+User
+connectionParameters: sd {
+2026-01-17 10:50:02.36
+d18e0cac
+User
+at Nd.parse (/home/runner/workspace/dist/index.cjs:63:42497)
+2026-01-17 10:50:02.36
+d18e0cac
+User
+at Readable.push (node:internal/streams/readable:392:5)
+2026-01-17 10:50:02.36
+d18e0cac
+User
+hint: undefined,
+2026-01-17 10:50:02.36
+d18e0cac
+User
+at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+2026-01-17 10:50:02.36
+d18e0cac
+User
+length: 116,
+2026-01-17 10:50:02.36
+d18e0cac
+User
+at Id.emit (node:events:524:28)
+2026-01-17 10:50:02.36
+d18e0cac
+User
+^
+2026-01-17 10:50:02.36
+d18e0cac
+User
+port: 5432,
+2026-01-17 10:50:02.36
+d18e0cac
+User
+detail: undefined,
+2026-01-17 10:50:02.36
+d18e0cac
+User
+position: undefined,
+2026-01-17 10:50:02.36
+d18e0cac
+User
+at qo._handleErrorEvent (/home/runner/workspace/dist/index.cjs:64:8566)
+2026-01-17 10:50:02.36
+d18e0cac
+User
+notice: [Function: bound _handleNotice],
+2026-01-17 10:50:02.36
+d18e0cac
+User
+line: '3289',
+2026-01-17 10:50:02.36
+d18e0cac
+User
+throw er; // Unhandled 'error' event
+2026-01-17 10:50:02.36
+d18e0cac
+User
+at addChunk (node:internal/streams/readable:561:12) {
+2026-01-17 10:50:02.36
+d18e0cac
+User
+user: 'neondb_owner',
+2026-01-17 10:50:02.36
+d18e0cac
+User
+routine: 'ProcessInterrupts',
+2026-01-17 10:50:02.36
+d18e0cac
+User
+at Nd.handlePacket (/home/runner/workspace/dist/index.cjs:63:43865)
+2026-01-17 10:50:02.36
+d18e0cac
+User
+at qo._handleErrorMessage (/home/runner/workspace/dist/index.cjs:64:8703)
+2026-01-17 10:50:02.36
+d18e0cac
+User
+at Nd.parse (/home/runner/workspace/dist/index.cjs:63:42532)
+2026-01-17 10:50:02.36
+d18e0cac
+User
+_events: [Object: null prototype] { error: [Function (anonymous)] },
+2026-01-17 10:50:02.36
+d18e0cac
+User
+at TLSSocket.emit (node:events:524:28)
+2026-01-17 10:50:02.36
+d18e0cac
+User
+at qo.r (/home/runner/workspace/dist/index.cjs:64:13559)
+2026-01-17 10:50:02.36
+d18e0cac
+User
+severity: 'FATAL',
+2026-01-17 10:50:05.16
+d18e0cac
+System
+command finished with error [node ./dist/index.cjs]: exit status 1
+2026-01-17 14:17:01.69
+d18e0cac
+System
+command finished with error [node ./dist/index.cjs]: signal: terminated
+2026-01-18 05:21:36.11
+6f7d3279
+System
+command finished

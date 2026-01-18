@@ -1,0 +1,149 @@
+Got you. Two separate things are showing up in that console dump:
+
+## 1) The `autocomplete` warning is **not** your bug
+
+This one:
+
+> `[DOM] Input elements should have autocomplete attributes…`
+
+is just Chrome nagging you to add `autocomplete="new-password"` (or `"current-password"`). It won’t break auth or requests. You can ignore it for now.
+
+---
+
+## 2) The real problem: `/api/admin/votes` is returning **500**
+
+A 500 here means the server threw *some* error in one of two places:
+
+### Path A — auth middleware is throwing (most likely with Neon flakiness)
+
+`GET /api/admin/votes` goes through `verifyAdminAuth` first, and that calls:
+
+* `storage.getAdminSession(token)`  ✅ **NO retry logic here right now**
+
+So if Neon drops a connection / resumes / times out, you get a transient DB error and `verifyAdminAuth` returns **500**, and the admin UI *looks like* it’s “fetching votes before token is ready.”
+
+### Path B — `storage.getAllVotes()` is throwing
+
+You *did* add retries in `getAllVotes()`, but it only retries on `error.code === '57P01'`.
+In practice, Neon/serverless disconnects often surface as other shapes too:
+
+* `ECONNRESET`
+* `ETIMEDOUT`
+* `EPIPE`
+* `socket hang up`
+* sometimes the error is nested: `error.cause.code`
+
+So you still end up with a 500, and React Query retries → you see repeated GETs + `ERR_ABORTED`.
+
+---
+
+# Do this next (no guessing; this will isolate it in 30 seconds)
+
+Open these in your browser:
+
+* `https://calivotes.site/api/health/db`
+* `https://calivotes.site/api/health/votes`
+* `https://calivotes.site/api/health/headers` (while you have admin open)
+
+Interpretation:
+
+* If **/health/votes is 500** → `getAllVotes()` is failing.
+* If **/health/votes is OK** but **/api/admin/votes is 500** → it’s failing in **verifyAdminAuth** / session lookup.
+* If **/health/db is flaky** → it’s general DB connectivity.
+
+You already have those routes in `server/routes.ts` (nice move).
+
+---
+
+# Fix set that will actually stop this (concrete code changes)
+
+## A) Add retry logic to `getAdminSession()` too
+
+Right now, your votes query retries, but your auth query doesn’t — and auth runs first.
+
+In `server/storage.ts`, replace `getAdminSession()` with this:
+
+```ts
+  async getAdminSession(token: string): Promise<AdminSession | undefined> {
+    const maxRetries = 3;
+    let lastError: any;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`DatabaseStorage.getAdminSession: Attempt ${attempt}/${maxRetries}...`);
+        const [session] = await db
+          .select()
+          .from(adminSessions)
+          .where(and(
+            eq(adminSessions.token, token),
+            gt(adminSessions.expiresAt, new Date())
+          ));
+        return session;
+      } catch (error: any) {
+        lastError = error;
+
+        const code = error?.code || error?.cause?.code;
+        const msg = String(error?.message || "");
+
+        console.error(`getAdminSession error (attempt ${attempt}):`, { code, msg });
+
+        const transient =
+          code === "57P01" ||
+          code === "ECONNRESET" ||
+          code === "ETIMEDOUT" ||
+          code === "EPIPE" ||
+          msg.toLowerCase().includes("socket hang up") ||
+          msg.toLowerCase().includes("connection terminated") ||
+          msg.toLowerCase().includes("timeout");
+
+        if (transient && attempt < maxRetries) {
+          await new Promise(r => setTimeout(r, 300 * attempt)); // small backoff
+          continue;
+        }
+
+        throw error;
+      }
+    }
+
+    throw lastError;
+  }
+```
+
+## B) Expand retry conditions in `getAllVotes()`
+
+Same idea: check `error?.cause?.code` and common transient messages, not only `'57P01'`.
+
+## C) Stop React Query from hammering on 500 (so you can breathe)
+
+In `client/src/pages/admin.tsx` where you have the votes `useQuery`, set:
+
+* `retry: false`
+* optionally `refetchOnWindowFocus: false`
+
+This prevents the “500 loop storm” while you debug.
+
+## D) Don’t clear admin token on server 500s
+
+If your admin code does *any* “if not ok → logout”, make it:
+
+* logout only on **401/403**
+* on **500** show “server error, retry” and keep token
+
+---
+
+# Why this still happens even after your pool error handler fix
+
+Your pool `.on("error")` handler prevents the **process crash** from unhandled pool errors (good).
+
+But it does **not** prevent **queries** from failing transiently. Those query failures still bubble up and become 500 responses unless you retry.
+
+Right now:
+
+* votes query: *some* retries ✅
+* admin session lookup: **no retries** ❌ (and it’s the first thing every admin request depends on)
+
+So you’ll still “randomly lose admin” even though the server no longer dies.
+
+---
+
+If you want, paste the JSON response body from the failing `/api/admin/votes` request (Network tab → Response). With that one message/code, I can tell you instantly whether it’s auth/session lookup vs getAllVotes, and which transient signature it is.

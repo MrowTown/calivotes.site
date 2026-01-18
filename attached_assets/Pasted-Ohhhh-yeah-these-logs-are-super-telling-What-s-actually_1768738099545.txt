@@ -1,0 +1,92 @@
+Ohhhh yeah — these logs are *super* telling.
+
+### What’s actually happening
+
+You’re not “mysteriously losing the DB” so much as:
+
+1. **Neon occasionally kills an existing connection** (very commonly during compute suspend/resume, scaling, or maintenance), and Postgres reports a **FATAL** with code **`57P01`**.
+
+   * `57P01` = *admin shutdown* (Neon closing the connection from its side).
+
+2. The Neon/pg client emits an **`'error'` event** on that connection.
+
+3. **Your Node process has no listener for that `'error'` event**, so Node does the classic:
+
+> `throw er; // Unhandled 'error' event`
+
+4. That **crashes your server** (`exit status 1`), which is why your admin UI suddenly can’t fetch / verify / read votes.
+
+So the “React is fetching before token” feeling is a *symptom*: the backend is intermittently **dying**, and on restart you’ll see auth/votes calls fail in weird orders.
+
+---
+
+## The direct fix (the one that stops the crashes)
+
+In your repo, this is the file:
+
+`server/db.ts`
+
+Right now you create the pool, but you never attach an `error` handler.
+
+Add this immediately after pool creation:
+
+```ts
+export const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
+// 🔥 Prevent “Unhandled 'error' event” crashes when Neon drops a connection (57P01 etc.)
+pool.on("error", (err: any) => {
+  console.error("Postgres pool error (idle client):", {
+    message: err?.message,
+    code: err?.code,
+    severity: err?.severity,
+  });
+  // Do NOT throw — letting this bubble will crash the process.
+});
+```
+
+That one listener alone usually eliminates the “server randomly dies” behavior.
+
+---
+
+## The second fix (so admin doesn’t nuke its own token on a 500)
+
+When the DB hiccups, your `/api/admin/verify` can return **500**, and if the frontend treats that as “invalid session” it will clear the token and you’re forced to log in again.
+
+Rule of thumb:
+
+* **401/403** → clear token
+* **5xx** → keep token, show “server error, retry”
+
+---
+
+## Why you see tons of “signal: terminated”
+
+That’s the platform killing/restarting the node process (often because it crashed, redeployed, slept, or hit resource limits). The *first* root cause is the crash from the unhandled `'error'` event; fix that and these usually drop dramatically.
+
+---
+
+## If you want the “bulletproof” version (optional but nice)
+
+Also add process-level guards somewhere early in server startup (e.g., `server/index.ts`):
+
+```ts
+process.on("unhandledRejection", (reason) => {
+  console.error("UnhandledRejection:", reason);
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("UncaughtException:", err);
+  // Consider NOT exiting if you want maximum uptime,
+  // but be careful: some errors leave the process in a bad state.
+});
+```
+
+---
+
+### Bottom line
+
+Your admin page “stops connecting” because your **server process is crashing** on a transient Neon disconnect (`57P01`) due to **missing pool/client error handlers**.
+
+If you paste me your `server/index.ts` (or wherever Express is created) and `server/routes.ts` admin verify/votes handlers, I’ll point out the exact spot where the frontend is probably clearing the token on a 500 too — that’s the second half of the “it feels like it fetches before auth” illusion.

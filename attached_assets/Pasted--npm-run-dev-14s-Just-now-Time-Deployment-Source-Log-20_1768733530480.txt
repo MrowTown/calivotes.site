@@ -1,0 +1,171 @@
+
+/
+
+npm run dev
+14s
+ • 
+Just now
+Time
+Deployment
+Source
+Log
+2026-01-16 16:04:09.89
+15d2457e
+System
+command finished with error [node ./dist/index.cjs]: signal: terminated
+2026-01-16 16:14:48.71
+76619548
+User
+at gn.handle_request (/home/runner/workspace/dist/index.cjs:38:3170)
+2026-01-16 16:14:48.71
+76619548
+User
+at /home/runner/workspace/dist/index.cjs:38:11145
+2026-01-16 16:14:48.71
+76619548
+User
+at br.process_params (/home/runner/workspace/dist/index.cjs:38:8474)
+2026-01-16 16:14:48.71
+76619548
+User
+at wm (/home/runner/workspace/dist/index.cjs:17:423339)
+2026-01-16 16:14:48.71
+76619548
+User
+at /home/runner/workspace/dist/index.cjs:38:7951
+2026-01-16 16:14:48.71
+76619548
+User
+PayloadTooLargeError: request entity too large
+2026-01-16 16:14:48.71
+76619548
+User
+at /home/runner/workspace/dist/index.cjs:17:571084
+2026-01-16 16:14:48.71
+76619548
+User
+at k (/home/runner/workspace/dist/index.cjs:38:8358)
+2026-01-16 16:14:48.71
+76619548
+User
+at B8 (/home/runner/workspace/dist/index.cjs:17:423112)
+2026-01-16 16:14:48.71
+76619548
+User
+at b (/home/runner/workspace/dist/index.cjs:38:7877)
+2026-01-16 16:14:48.71
+76619548
+User
+at r4 (/home/runner/workspace/dist/index.cjs:17:427430)
+2026-01-16 16:21:40.46
+76619548
+System
+command finished with error [node ./dist/index.cjs]: signal: terminated
+2026-01-16 16:35:58.49
+06373337
+System
+command finished with error [node ./dist/index.cjs]: signal: terminated
+2026-01-16 16:37:34.57
+06373337
+System
+command finished with error [node ./dist/index.cjs]: signal: terminated
+2026-01-16 17:01:02.62
+7432585b
+System
+command finished with error [node ./dist/index.cjs]: signal: terminated
+2026-01-16 17:14:03.13
+c1d12052
+System
+command finished with error [node ./dist/index.cjs]: signal: terminated
+2026-01-16 17:31:02.76
+592f7b2e
+User
+database: 'neondb',
+2026-01-16 17:31:02.76
+592f7b2e
+User
+dataType: undefined,
+2026-01-16 17:31:02.76
+592f7b2e
+User
+error: [Function: i],
+2026-01-16 17:31:02.76
+592f7b2e
+User
+file: 'postgres.c',
+2026-01-16 17:31:02.76
+592f7b2e
+User
+_eventsCount: 1,
+2026-01-16 17:31:02.76
+592f7b2e
+User
+_types: xo {
+2026-01-16 17:31:02.76
+592f7b2e
+User
+at /home/runner/workspace/dist/index.cjs:63:50560
+2026-01-16 17:31:02.76
+592f7b2e
+User
+at Po.emit (node:events:524:28)
+2026-01-16 17:31:02.76
+592f7b2e
+User
+throw er; // Unhandled 'error' event
+2026-01-16 17:31:02.76
+592f7b2e
+User
+newListener: [ [Function: keylogNewListener], [Function: newListener] ],
+2026-01-16 17:31:02.76
+592f7b2e
+User
+buffer: [],
+2026-01-16 17:31:02.76
+592f7b2e
+User
+client: Po {
+2026-01-16 17:31:02.76
+592f7b2e
+User
+code: '57P01',
+2026-01-16 17:31:02.76
+592f7b2e
+User
+_maxListeners: undefined,
+2026-01-16 17:31:02.76
+592f7b2e
+User
+severity: 'FATAL',
+2026-01-16 17:31:02.76
+592f7b2e
+User
+at addChunk (node:internal/streams/readable:561:12) {
+2026-01-16 17:31:02.76
+592f7b2e
+User
+replication: undefined,
+2026-01-16 17:31:02.76
+592f7b2e
+User
+Emitted 'error' event on instance at:
+2026-01-16 17:31:02.76
+592f7b2e
+User
+at TLSSocket. (/home/runner/workspace/dist/index.cjs:63:47921)
+2026-01-16 17:31:02.76
+592f7b2e
+User
+constraint: undefined,
+2026-01-16 17:31:02.76
+592f7b2e
+User
+line: '3289',
+2026-01-16 17:31:02.76
+592f7b2e
+User
+[Symbol(kBytesRead)]: 4443,
+2026-01-16 17:31:02.76
+592f7b2e
+User
+close: [Function: onSocketCloseDestroySSL],

@@ -1,0 +1,82 @@
+Yeah — I can see **exactly why this keeps “randomly” dying**, and it matches your gut feeling that it *looks* like “admin stops connecting to DB.”
+
+### The real killer: your Express error handler is crashing the server on every API error
+
+In `server/index.ts` you have:
+
+```ts
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  const status = err.status || err.statusCode || 500;
+  const message = err.message || "Internal Server Error";
+
+  res.status(status).json({ message });
+  throw err;   // <- this forces the process to crash + restart
+});
+```
+
+That `throw err;` means **any** thrown error (including a transient Neon disconnect, a bad query, a missing env var, a failed auth lookup) will:
+
+1. return a 500 to the browser
+2. **crash node**
+3. trigger the platform to restart it (all those “signal: terminated” lines)
+
+So from the outside it looks like “DB stopped responding,” but what’s happening is: **an API request errors → your server suicides → subsequent requests fail / reconnect / flap.**
+
+✅ Fix: **remove the throw** and log instead:
+
+```ts
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  const status = err.status || err.statusCode || 500;
+  const message = err.message || "Internal Server Error";
+
+  console.error("API error:", err); // keep this
+  if (!res.headersSent) res.status(status).json({ message });
+});
+```
+
+That one change usually turns “mysterious DB disconnects” into a normal, debuggable error that doesn’t nuke the whole app.
+
+---
+
+### Why `/api/admin/votes` is 500 specifically
+
+That route goes:
+
+`GET /api/admin/votes` → `verifyAdminAuth` → `storage.getAdminSession(token)` → **DB query**
+
+So if Neon drops a connection (common) or the pool has a transient hiccup, **the session lookup throws**, you get a 500… and with the current error middleware, the whole process restarts.
+
+Once you remove the `throw err`, you’ll start seeing the *real* underlying message in logs (auth vs DB vs query).
+
+---
+
+### One more “quiet chaos” item: you’re logging full JSON responses for every `/api/*`
+
+Your logger does:
+
+```ts
+if (capturedJsonResponse) logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+```
+
+If any endpoint ever returns something large (or accidentally returns a token blob), you get those **giant log spews** like the one you pasted. Not the main bug, but it makes everything harder to read.
+
+Suggestion: only log `message`, not full bodies (or cap length).
+
+---
+
+### What I’d do in order (fastest path to stable)
+
+1. **Remove `throw err`** in `server/index.ts` (this is the big one).
+2. Add `console.error(err)` in the error middleware (so you see the real DB/auth failure).
+3. If Neon is still flaking: in `db.ts` keep the `pool.on("error")` handler (you already have it), and optionally add **a retry wrapper** around session lookup / vote fetch (1–2 retries with a tiny delay) for `57P01` / connection reset style errors.
+
+---
+
+If you paste me the **actual server-side error line** that appears right after a `/api/admin/votes` 500 *after you remove the throw*, I’ll tell you in one shot whether it’s:
+
+* Neon “admin shutdown / ProcessInterrupts” style transient
+* bad connection string / SSL
+* a query/schema mismatch in `admin_sessions`
+* or auth token not being sent the way the server expects
+
+And, Seamus… once we stop your server from dramatically throwing itself off a balcony every time it’s upset, this whole system is going to feel *so* much calmer.
